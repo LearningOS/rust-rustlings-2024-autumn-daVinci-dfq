@@ -2,19 +2,18 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
-use std::vec::*;
+// use std::vec::*;
 
 #[derive(Debug)]
-struct Node<T> {
+struct Node<T: PartialOrd> {
     val: T,
     next: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Node<T> {
+impl<T: PartialOrd> Node<T> {
     fn new(t: T) -> Node<T> {
         Node {
             val: t,
@@ -23,19 +22,19 @@ impl<T> Node<T> {
     }
 }
 #[derive(Debug)]
-struct LinkedList<T> {
+struct LinkedList<T: PartialOrd> {
     length: u32,
     start: Option<NonNull<Node<T>>>,
     end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> {
+impl<T: PartialOrd> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T: PartialOrd> LinkedList<T> {
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -69,18 +68,48 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
+	pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self
 	{
 		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+		
+        match (list_a.start, list_b.start) {
+            (None, None) => Self {
+                length: 0,
+                start: None,
+                end: None
+                },
+            (Some(_), None) => list_a,
+            (None, Some(_)) => list_b,
+            (mut a, mut b) => {
+                let mut ret = Self {
+                    length: list_a.length + list_b.length,
+                    start: None,
+                    end: None
+                };
+                let mut current = &mut ret.start;
+                while let (Some(a_ptr), Some(b_ptr)) = (a, b) {
+                    if unsafe { a_ptr.as_ref().val < b_ptr.as_ref().val } {
+                        *current = a;
+                        a = unsafe { (*a_ptr.as_ptr()).next };
+                        unsafe { current = &mut (*a_ptr.as_ptr()).next };
+                    } else {
+                        *current = b;
+                        b = unsafe { (*b_ptr.as_ptr()).next };
+                        unsafe { current = &mut (*b_ptr.as_ptr()).next };
+                    }
+                }
+                if let (a_left, None) = (a, b) {
+                    *current = a;
+                } else {
+                    *current = b;
+                }
+                ret
+            }
         }
 	}
 }
 
-impl<T> Display for LinkedList<T>
+impl<T: PartialOrd> Display for LinkedList<T>
 where
     T: Display,
 {
@@ -92,7 +121,7 @@ where
     }
 }
 
-impl<T> Display for Node<T>
+impl<T: PartialOrd> Display for Node<T>
 where
     T: Display,
 {
